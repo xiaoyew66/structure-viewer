@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PDB Viewer</title>
+
+    <!-- Load 3Dmol.js from CDN so window.$3Dmol is available -->
+    <script
+      type="text/javascript"
+      src="https://3Dmol.csb.pitt.edu/build/3Dmol-min.js"
+    ></script>
+  </head>
+  <body>
+    <!-- React will mount into this root div -->
+    <div id="root"></div>
+
+    <!-- Vite will bundle and load /src/main.tsx -->
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
