@@ -205,46 +205,71 @@ const App: React.FC = () => {
     if (doRender) viewer.render();
   };
 
-  // hover labels
-  const registerHoverLabels = () => {
-    if (!viewer) return;
-    viewer.setHoverable({}, false, null, null);
-    viewer.setHoverable(
-      {},
-      true,
-      (atom:any, vwr:any) => {
-        if (!atom) return;
-        vwr.removeAllLabels();
+// Hover labels → HTML overlay, using event.x/Y from the hover callback
+const registerHoverLabels = () => {
+  if (!viewer || !viewerRef.current) return;
 
-        let txt:string;
-        if (atom.resn==="VAL") {
-          txt =
-            `Atom: ${atom.serial};\n` +
-            `Residue: ${atom.resn};\n` +
-            `Residue Name: ${atom.origResName}`;
-        } else {
-          txt =
-            `Atom: ${atom.serial};\n` +
-            `Molecule: ${atom.origResName};\n` +
-            `Atom name: ${atom.origAtomSymbol}`;
-        }
+  // first clear any old hover
+  viewer.setHoverable({}, false, null, null);
 
-        vwr.addLabel(txt, {
-          position: { x: atom.x, y: atom.y, z: atom.z },
-          backgroundColor: "lightgray",
-          fontColor: "black",
-          fontSize: 16,
-          inFront: true
-        });
-        vwr.render();
-      },
-      (_:any, vwr:any) => {
-        vwr.removeAllLabels();
-        vwr.render();
+  // now register a new one
+  viewer.setHoverable(
+    {},
+    true,
+    (atom: any, vwr: any, event: any) => {
+      if (!atom) return;
+
+      // remove old tooltips
+      viewerRef.current!
+        .querySelectorAll(".mol-tooltip")
+        .forEach(el => el.remove());
+
+      // get canvas' position on screen
+      //const canvas = vwr.getCanvas();
+      //const rect = canvas.getBoundingClientRect();
+
+      //position at the actual mouse pointer
+      const screenX = event.layerX;
+      const screenY = event.layerY;
+
+      // build the HTML tooltip
+      const tip = document.createElement("div");
+      tip.className = "mol-tooltip";
+      tip.style.position = "absolute";
+      tip.style.left = `${screenX}px`;
+      tip.style.top  = `${screenY}px`;
+      tip.style.background = "rgba(255,255,255,0.9)";
+      tip.style.border     = "1px solid #888";
+      tip.style.borderRadius = "4px";
+      tip.style.padding    = "4px 6px";
+      tip.style.fontSize   = "12px";
+      tip.style.pointerEvents = "none";
+
+      // fill in whatever HTML you like
+      if (atom.resn === "VAL") {
+        tip.innerHTML = `
+          <div><b>Atom:</b> ${atom.serial}</div>
+          <div><b>Residue:</b> ${atom.resn}</div>
+          <div><b>Residue Name:</b> ${atom.origResName}</div>
+        `;
+      } else {
+        tip.innerHTML = `
+          <div><b>Atom:</b> ${atom.serial}</div>
+          <div><b>Molecule:</b> ${atom.origResName}</div>
+          <div><b>Atom name:</b> ${atom.origAtomSymbol}</div>
+        `;
       }
-    );
-  };
 
+      viewerRef.current!.appendChild(tip);
+    },
+    (_atom: any, vwr: any) => {
+      // on unhover, remove the tooltip
+      viewerRef.current!
+        .querySelectorAll(".mol-tooltip")
+        .forEach(el => el.remove());
+    }
+  );
+};
   // click highlight + label
   const updateClickHandler = () => {
     if (!viewer) return;
